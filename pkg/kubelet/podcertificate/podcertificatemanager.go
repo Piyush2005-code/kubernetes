@@ -300,7 +300,17 @@ func NewIssuingManager(kc kubernetes.Interface, podManager PodManager, recorder 
 			m.queueAllProjectionsForPod(pcr.Spec.PodUID)
 		},
 		DeleteFunc: func(obj any) {
-			pcr := obj.(*certificatesv1.PodCertificateRequest)
+			pcr, ok := obj.(*certificatesv1.PodCertificateRequest)
+			if !ok {
+				tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
+				if !ok {
+					return
+				}
+				pcr, ok = tombstone.Obj.(*certificatesv1.PodCertificateRequest)
+				if !ok {
+					return
+				}
+			}
 			m.queueAllProjectionsForPod(pcr.Spec.PodUID)
 		},
 	})
